@@ -54,7 +54,7 @@ set(type_support_compat_headers
 
 set(type_support_sources
     ${type_support_sources}
-    hpx/type_support/detail/launder.cpp
+    detail/launder.cpp
 )
 
 include(HPX_AddModule)
