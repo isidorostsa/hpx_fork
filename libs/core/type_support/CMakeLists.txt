@@ -9,7 +9,6 @@ set(type_support_headers
     hpx/type_support/detail/wrap_int.hpp
     hpx/type_support/bit_cast.hpp
     hpx/type_support/construct_at.hpp
-    hpx/type_support/relocate_at.hpp
     hpx/type_support/decay.hpp
     hpx/type_support/default_sentinel.hpp
     hpx/type_support/detected.hpp
@@ -23,6 +22,7 @@ set(type_support_headers
     hpx/type_support/lazy_enable_if.hpp
     hpx/type_support/pack.hpp
     hpx/type_support/meta.hpp
+    hpx/type_support/relocate_at.hpp
     hpx/type_support/static.hpp
     hpx/type_support/unwrap_ref.hpp
     hpx/type_support/unused.hpp
@@ -52,10 +52,7 @@ set(type_support_compat_headers
 )
 # cmake-format: on
 
-set(type_support_sources
-    ${type_support_sources}
-    detail/launder.cpp
-)
+set(type_support_sources)
 
 include(HPX_AddModule)
 add_hpx_module(

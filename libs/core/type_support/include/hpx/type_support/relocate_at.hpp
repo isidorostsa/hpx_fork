@@ -33,10 +33,6 @@ namespace hpx {
         }
     };
 
-#if not defined(__cpp_lib_launder)
-    extern void* __launder(void* p) noexcept;
-#endif
-
     template <class St, class Dt,
         std::enable_if_t<std::is_same_v<    // possibly unnecessary
                              std::remove_cv_t<std::remove_reference_t<St>>,
@@ -49,11 +45,7 @@ namespace hpx {
     {
         // Do we have this in HPX?
         ::memmove(dst, src, sizeof(St));
-#if defined(__cpp_lib_launder)
         return std::launder(dst);
-#else
-        return __launder(dst);
-#endif
     }
 
     template <class St, class Dt>
