@@ -96,6 +96,7 @@ set(tests
     partition_copy
     reduce_
     reduce_by_key
+    relocate_at_tests
     remove
     remove1
     remove2

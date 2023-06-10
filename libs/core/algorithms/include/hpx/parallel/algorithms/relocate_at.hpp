@@ -12,6 +12,8 @@
 #include <cstring>
 #include <type_traits>
 
+static_assert(false);
+
 namespace hpx {
 
 #if defined(HPX_HAVE_P1144_STD_RELOCATE_AT)
@@ -33,8 +35,9 @@ namespace hpx {
 
     template <class St, class Dt,
         std::enable_if_t<std::is_same_v<    // possibly unnecessary
-                             std::remove_cv_t<std::remove_reference_t<St>>,
-                             std::remove_cv_t<std::remove_reference_t<Dt>>> &&
+                            std::decay_t<St>, std::decay_t<Dt>> &&
+                            //  std::remove_cv_t<std::remove_reference_t<St>>,
+                            //  std::remove_cv_t<std::remove_reference_t<Dt>>> &&
                 hpx::is_trivially_relocatable_v<    // the important part
                     std::remove_cv_t<std::remove_reference_t<St>>> &&
                 !std::is_volatile_v<St> && !std::is_volatile_v<Dt>,
