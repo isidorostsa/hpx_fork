@@ -71,6 +71,7 @@ set(algorithms_headers
     hpx/parallel/algorithms/partition.hpp
     hpx/parallel/algorithms/reduce_by_key.hpp
     hpx/parallel/algorithms/reduce.hpp
+    hpx/parallel/algorithms/relocate_at.hpp
     hpx/parallel/algorithms/remove_copy.hpp
     hpx/parallel/algorithms/remove.hpp
     hpx/parallel/algorithms/replace.hpp
