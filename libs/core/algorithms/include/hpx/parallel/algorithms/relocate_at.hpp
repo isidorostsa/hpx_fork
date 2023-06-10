@@ -9,10 +9,10 @@
 #include <hpx/algorithms/traits/is_trivially_relocatable.hpp>
 #include <hpx/type_support/construct_at.hpp>
 
+static_assert(false);
+
 #include <cstring>
 #include <type_traits>
-
-static_assert(false);
 
 namespace hpx {
 
