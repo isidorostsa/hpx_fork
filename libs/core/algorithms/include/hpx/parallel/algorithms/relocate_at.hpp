@@ -15,7 +15,7 @@
 namespace hpx {
 
 #if defined(HPX_HAVE_P1144_STD_RELOCATE_AT)
-    using std::relocate_at; // what would be the include for this?
+    using std::relocate_at;    // what would be the include for this?
 #else
     template <class T>
     struct destroy_guard
@@ -25,6 +25,7 @@ namespace hpx {
           : t(t)
         {
         }
+// if c++ 20 is available, we can use the destructor
         ~destroy_guard()
         {
             t.~T();
@@ -32,41 +33,37 @@ namespace hpx {
     };
 
     template <class St, class Dt,
-        std::enable_if_t<std::is_same_v<    // possibly unnecessary
-                            std::decay_t<St>, std::decay_t<Dt>> &&
-                            //  std::remove_cv_t<std::remove_reference_t<St>>,
-                            //  std::remove_cv_t<std::remove_reference_t<Dt>>> &&
-                hpx::is_trivially_relocatable_v<    // the important part
-                    std::remove_cv_t<std::remove_reference_t<St>>> &&
+        std::enable_if_t<std::is_same_v<std::decay_t<St>, std::decay_t<Dt>> &&
+                hpx::is_trivially_relocatable_v<std::decay_t<St>> &&
                 !std::is_volatile_v<St> && !std::is_volatile_v<Dt>,
             int> = 0>
-    Dt* hpx_relocate_at2(int, St* src, Dt* dst) 
+    Dt* hpx_relocate_at_helper(int, St* src, Dt* dst) noexcept
     {
         std::memmove(dst, src, sizeof(St));
         return std::launder(dst);
     }
 
+    // this is move and destroy
     template <class St, class Dt>
-    Dt* hpx_relocate_at2(long, St* src, Dt* dst) noexcept(
+   Dt* hpx_relocate_at_helper(long, St* src, Dt* dst) noexcept(
+        // has non-throwing move constructor
         std::is_nothrow_constructible_v<Dt, St&&>)
-    // non-throwing move constructor
     {
         destroy_guard<St> g(*src);
         return hpx::construct_at(dst, HPX_MOVE(*src));
     }
 
     template <typename T>
-    constexpr T* relocate_at(T* src, T* dst) noexcept(
+    T* relocate_at(T* src, T* dst) noexcept(
         std::is_nothrow_move_constructible_v<T>)
     {
         static_assert(
             std::is_move_constructible_v<T> && std::is_destructible_v<T>,
-            "std::construct_at(dst, T(std::move(*source)) must be well-formed");
+            "construct_at(dst, T(std::move(*source)) must be well-formed");
 
-        return hpx_relocate_at2(
-            0, src, dst);    // The zero is a dummy argument
-                             // to avoid ambiguity with the
-                             // SFINAE overloads
+        return hpx::hpx_relocate_at_helper(0, src, dst);    // The zero is a dummy argument
+                                                 // to avoid ambiguity with the
+                                                 // SFINAE overloads
     }
 #endif    // defined(HPX_HAVE_P1144_STD_RELOCATE_AT)
 
