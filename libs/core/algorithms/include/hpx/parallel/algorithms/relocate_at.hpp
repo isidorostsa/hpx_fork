@@ -25,7 +25,6 @@ namespace hpx {
           : t(t)
         {
         }
-// if c++ 20 is available, we can use the destructor
         ~destroy_guard()
         {
             t.~T();
@@ -45,7 +44,7 @@ namespace hpx {
 
     // this is move and destroy
     template <class St, class Dt>
-   Dt* hpx_relocate_at_helper(long, St* src, Dt* dst) noexcept(
+    Dt* hpx_relocate_at_helper(long, St* src, Dt* dst) noexcept(
         // has non-throwing move constructor
         std::is_nothrow_constructible_v<Dt, St&&>)
     {
@@ -61,10 +60,37 @@ namespace hpx {
             std::is_move_constructible_v<T> && std::is_destructible_v<T>,
             "construct_at(dst, T(std::move(*source)) must be well-formed");
 
-        return hpx::hpx_relocate_at_helper(0, src, dst);    // The zero is a dummy argument
-                                                 // to avoid ambiguity with the
-                                                 // SFINAE overloads
+        return hpx::hpx_relocate_at_helper(
+            0, src, dst);    // The zero is a dummy argument
+                             // to avoid ambiguity with the
+                             // SFINAE overloads
     }
+
+    /// ABI HACKY PART
+    template <class T,
+        typename std::enable_if_t<!hpx::is_trivially_relocatable_v<T> ||
+                std::is_trivially_destructible_v<T>,
+            int> = 0>
+    T relocate(T* source)
+    {
+        std::cout << "relocate(T *source) move version" << std::endl;
+        auto g = hpx::destroy_guard(*source);
+        return HPX_MOVE(*source);
+    }
+
+    template <class T,
+        typename std::enable_if_t<hpx::is_trivially_relocatable_v<T> &&
+                !std::is_trivially_destructible_v<T>,
+            int> = 0>
+    T relocate(T* source)
+    {
+        std::cout << "relocate(T *source) trivially relocatable version"
+                  << std::endl;
+        auto magic = (T(*)(void*, size_t)) memcpy;
+        return magic(source, sizeof(T));
+    }
+    // more info this https://quuxplusone.github.io/blog/2022/05/18/std-relocate/
+
 #endif    // defined(HPX_HAVE_P1144_STD_RELOCATE_AT)
 
 }    // namespace hpx
