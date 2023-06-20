@@ -17,40 +17,44 @@ namespace hpx {
 #if defined(HPX_HAVE_P1144_STD_RELOCATE_AT)
     using std::relocate_at;    // what would be the include for this?
 #else
-    template <class T>
-    struct destroy_guard
-    {
-        T& t;
-        explicit destroy_guard(T& t)
-          : t(t)
-        {
-        }
-        ~destroy_guard()
-        {
-            t.~T();
-        }
-    };
 
-    template <class St, class Dt,
-        std::enable_if_t<std::is_same_v<std::decay_t<St>, std::decay_t<Dt>> &&
-                hpx::is_trivially_relocatable_v<std::decay_t<St>> &&
-                !std::is_volatile_v<St> && !std::is_volatile_v<Dt>,
-            int> = 0>
-    Dt* hpx_relocate_at_helper(int, St* src, Dt* dst) noexcept
-    {
-        std::memmove(dst, src, sizeof(St));
-        return std::launder(dst);
-    }
+    namespace detail {
+        template <class T>
+        struct destroy_guard
+        {
+            T& t;
+            explicit destroy_guard(T& t)
+              : t(t)
+            {
+            }
+            ~destroy_guard()
+            {
+                t.~T();
+            }
+        };
 
-    // this is move and destroy
-    template <class St, class Dt>
-    Dt* hpx_relocate_at_helper(long, St* src, Dt* dst) noexcept(
-        // has non-throwing move constructor
-        std::is_nothrow_constructible_v<Dt, St&&>)
-    {
-        destroy_guard<St> g(*src);
-        return hpx::construct_at(dst, HPX_MOVE(*src));
-    }
+        template <class St, class Dt,
+            std::enable_if_t<
+                std::is_same_v<std::decay_t<St>, std::decay_t<Dt>> &&
+                    hpx::is_trivially_relocatable_v<std::decay_t<St>> &&
+                    !std::is_volatile_v<St> && !std::is_volatile_v<Dt>,
+                int> = 0>
+        Dt* relocate_at_helper(int, St* src, Dt* dst) noexcept
+        {
+            std::memmove(dst, src, sizeof(St));
+            return std::launder(dst);
+        }
+
+        // this is move and destroy
+        template <typename St, typename Dt>
+        Dt* relocate_at_helper(long, St* src, Dt* dst) noexcept(
+            // has non-throwing move constructor
+            std::is_nothrow_constructible_v<Dt, St&&>)
+        {
+            destroy_guard<St> g(*src);
+            return hpx::construct_at(dst, HPX_MOVE(*src));
+        }
+    }    // namespace detail
 
     template <typename T>
     T* relocate_at(T* src, T* dst) noexcept(
@@ -60,7 +64,7 @@ namespace hpx {
             std::is_move_constructible_v<T> && std::is_destructible_v<T>,
             "construct_at(dst, T(std::move(*source)) must be well-formed");
 
-        return hpx::hpx_relocate_at_helper(
+        return hpx::detail::relocate_at_helper(
             0, src, dst);    // The zero is a dummy argument
                              // to avoid ambiguity with the
                              // SFINAE overloads
@@ -73,8 +77,7 @@ namespace hpx {
             int> = 0>
     T relocate(T* source)
     {
-        std::cout << "relocate(T *source) move version" << std::endl;
-        auto g = hpx::destroy_guard(*source);
+        auto g = hpx::detail::destroy_guard(*source);
         return HPX_MOVE(*source);
     }
 
@@ -84,8 +87,6 @@ namespace hpx {
             int> = 0>
     T relocate(T* source)
     {
-        std::cout << "relocate(T *source) trivially relocatable version"
-                  << std::endl;
         auto magic = (T(*)(void*, size_t)) memcpy;
         return magic(source, sizeof(T));
     }
