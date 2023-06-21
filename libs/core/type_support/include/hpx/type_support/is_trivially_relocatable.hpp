@@ -17,6 +17,24 @@
         };                                                                     \
     }
 
+#define HPX_DECLARE_TRIVIALLY_RELOCATABLE_TEMPLATE(T)                          \
+    namespace hpx {                                                            \
+        template <typename K>                                                  \
+        struct is_trivially_relocatable<T<K>> : std::true_type                 \
+        {                                                                      \
+        };                                                                     \
+    }
+
+#define HPX_DECLARE_TRIVIALLY_RELOCATABLE_TEMPLATE_IF(T, Condition)            \
+    namespace hpx {                                                            \
+        template <typename K>                                                  \
+        struct is_trivially_relocatable<T<K>>                                  \
+          : std::conditional_t<Condition<K>::value, std::true_type,            \
+                std::false_type>                                               \
+        {                                                                      \
+        };                                                                     \
+    }
+
 namespace hpx {
 
     template <typename T, typename = void>

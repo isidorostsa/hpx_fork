@@ -136,6 +136,43 @@ struct polymorphic
 };
 static_assert(!hpx::is_trivially_relocatable_v<polymorphic>);
 
+/* New part */
+
+#include <vector>
+
+HPX_DECLARE_TRIVIALLY_RELOCATABLE_TEMPLATE(std::vector)
+static_assert(hpx::is_trivially_relocatable_v<std::vector<int>>);
+
+struct trivially_relocatable
+{
+};
+
+struct non_trivially_relocatable
+{
+    non_trivially_relocatable(non_trivially_relocatable const&);
+};
+
+static_assert(hpx::is_trivially_relocatable_v<trivially_relocatable>);
+static_assert(!hpx::is_trivially_relocatable_v<non_trivially_relocatable>);
+
+template <typename T>
+struct non_trivially_copyable_container
+{
+    T t;
+
+    non_trivially_copyable_container();
+    non_trivially_copyable_container(non_trivially_copyable_container const&);
+    non_trivially_copyable_container& operator=(non_trivially_copyable_container const&);
+    ~non_trivially_copyable_container();
+};
+HPX_DECLARE_TRIVIALLY_RELOCATABLE_TEMPLATE_IF(
+    non_trivially_copyable_container, hpx::is_trivially_relocatable)
+
+static_assert(hpx::is_trivially_relocatable_v<
+    non_trivially_copyable_container<trivially_relocatable>>);
+static_assert(!hpx::is_trivially_relocatable_v<
+              non_trivially_copyable_container<non_trivially_relocatable>>);
+
 // Primitive data types are trivially relocatable
 static_assert(hpx::is_trivially_relocatable_v<int>,
     "int should be Trivially Relocatable");
