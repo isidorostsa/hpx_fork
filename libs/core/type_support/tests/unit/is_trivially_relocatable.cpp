@@ -160,7 +160,8 @@ struct non_trivially_copyable_container
 
     non_trivially_copyable_container();
     non_trivially_copyable_container(non_trivially_copyable_container const&);
-    non_trivially_copyable_container& operator=(non_trivially_copyable_container const&);
+    non_trivially_copyable_container& operator=(
+        non_trivially_copyable_container const&);
     ~non_trivially_copyable_container();
 };
 HPX_DECLARE_TRIVIALLY_RELOCATABLE_TEMPLATE_IF(
