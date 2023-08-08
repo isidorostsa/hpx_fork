@@ -57,7 +57,7 @@ namespace hpx {
 
         template <typename T,
             std::enable_if_t<relocate_using_memmove<T>, int> = 0>
-        T* relocate_at_helper(T* src, T* dst) noexcept
+        HPX_FORCEINLINE T* relocate_at_helper(T* src, T* dst) noexcept
         {
             void* dst_void = const_cast<void*>(static_cast<const void*>(dst));
             void* src_void = const_cast<void*>(static_cast<const void*>(src));
@@ -70,7 +70,7 @@ namespace hpx {
         // this is move and destroy
         template <typename T,
             std::enable_if_t<!relocate_using_memmove<T>, int> = 0>
-        T* relocate_at_helper(T* src, T* dst) noexcept(
+        HPX_FORCEINLINE T* relocate_at_helper(T* src, T* dst) noexcept(
             // has non-throwing move constructor
             std::is_nothrow_move_constructible_v<T>)
         {
@@ -80,7 +80,7 @@ namespace hpx {
     }    // namespace detail
 
     template <typename T>
-    T* relocate_at(T* src, T* dst) noexcept(
+    HPX_FORCEINLINE T* relocate_at(T* src, T* dst) noexcept(
         // noexcept if the memmove path is taken or if the move path is noexcept
         noexcept(detail::relocate_at_helper(src, dst)))
     {
