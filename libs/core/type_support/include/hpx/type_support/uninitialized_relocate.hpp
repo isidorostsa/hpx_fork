@@ -170,7 +170,7 @@ namespace hpx {
     {
         static_assert(detail::choose_uninitialized_relocate_helper<InIter,
                           FwdIter>::valid_relocation,
-            "uninitialized_move(first, last, dst) must be well-formed");
+            "Relocating from this source type to this destination is not possible");
         return detail::uninitialized_relocate_helper(first, last, dst);
     }
 

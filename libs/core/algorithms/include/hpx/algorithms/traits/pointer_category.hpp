@@ -151,11 +151,14 @@ namespace hpx::traits {
             using type_src = iter_value_t<Source>;
             using type_dst = iter_value_t<Dest>;
 
+            constexpr static bool valid_relocation =
+                is_relocatable_from_v<out_type, in_type>;
+
             constexpr static bool memcpy_legal =
                 !std::is_volatile_v<type_src> && !std::is_volatile_v<type_dst>;
 
             constexpr static bool is_buffer_memcpyable =
-                is_relocatable_from_v<type_src, type_dst> &&
+                valid_relocation &&
                 is_trivially_relocatable_v<type_src> &&
                 iterators_are_contiguous_v<Source, Dest> && memcpy_legal;
 

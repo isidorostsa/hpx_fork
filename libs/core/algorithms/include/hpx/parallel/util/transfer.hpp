@@ -488,18 +488,6 @@ namespace hpx::parallel::util {
             HPX_FORCEINLINE static in_out_result<InIter, OutIter> call(
                 ExPolicy&& policy, InIter first, std::size_t num, OutIter dest)
             {
-                /*
-                1, 2, 3, 4, 5
-                a, b, c, d, e
-
-                f(1, a), f(2, b), f(3, c) throws
-                g(a), g(b), g(4), g(5)
-
-                    // destroy all objects constructed so far
-                    std::destroy(original_dst, dst);
-                    // destroy all the objects not relocated yet
-                    std::destroy(++first, last);
-                */
 
                 using zip_iterator = hpx::util::zip_iterator<InIter, OutIter>;
 
