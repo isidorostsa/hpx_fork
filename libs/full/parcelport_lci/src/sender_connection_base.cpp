@@ -15,6 +15,7 @@
 #include <hpx/modules/lci_base.hpp>
 #include <hpx/parcelport_lci/backlog_queue.hpp>
 #include <hpx/parcelport_lci/header.hpp>
+#include <hpx/parcelport_lci/helper.hpp>
 #include <hpx/parcelport_lci/locality.hpp>
 #include <hpx/parcelport_lci/parcelport_lci.hpp>
 #include <hpx/parcelport_lci/receiver_base.hpp>
@@ -54,33 +55,24 @@ namespace hpx::parcelset::policies::lci {
     {
         auto start_time = util::lci_environment::pcounter_now();
         return_t ret;
-        const int retry_max_spin = 32;
         if (!config_t::enable_lci_backlog_queue ||
             HPX_UNLIKELY(!pp_->is_initialized))
         {
-            // If we are sending early parcels, we should not expect the
-            // thread make progress on the backlog queue
+            // If we are sending early parcels, we should not expect the thread
+            // make progress on the backlog queue.
             int retry_count = 0;
             do
             {
                 ret = send_nb();
                 if (ret.status == return_status_t::retry)
                 {
-                    ++retry_count;
-                    if (retry_count > retry_max_spin)
-                    {
-                        retry_count = 0;
-                        while (pp_->background_work(
-                            -1, parcelport_background_mode_all))
-                            continue;
-                        hpx::this_thread::yield();
-                    }
                     if (config_t::progress_type ==
                             config_t::progress_type_t::worker ||
                         config_t::progress_type ==
                             config_t::progress_type_t::pthread_worker)
                         while (pp_->do_progress_local())
                             continue;
+                    yield_k(retry_count, config_t::send_nb_max_retry);
                 }
             } while (ret.status == return_status_t::retry);
         }
@@ -115,10 +107,10 @@ namespace hpx::parcelset::policies::lci {
         char buf[1024];
         size_t consumed = 0;
         consumed += snprintf(buf + consumed, sizeof(buf) - consumed,
-            "%d:%lf:send_connection(%p) start:%d:%d:%d:[", LCI_RANK,
+            "%d:%lf:send_connection(%p) start:%d:%d:%d:%d:[", LCI_RANK,
             hpx::chrono::high_resolution_clock::now() / 1e9, (void*) this,
-            header_.numbytes_nonzero_copy(), header_.numbytes_tchunk(),
-            header_.num_zero_copy_chunks());
+            dst_rank, header_.numbytes_nonzero_copy(),
+            header_.numbytes_tchunk(), header_.num_zero_copy_chunks());
         HPX_ASSERT(sizeof(buf) > consumed);
         for (int i = 0; i < header_.num_zero_copy_chunks(); ++i)
         {

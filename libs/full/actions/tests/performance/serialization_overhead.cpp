@@ -1,10 +1,11 @@
-//  Copyright (c) 2007-2017 Hartmut Kaiser
+//  Copyright (c) 2007-2023 Hartmut Kaiser
 //
 //  SPDX-License-Identifier: BSL-1.0
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <hpx/config.hpp>
+
 #if !defined(HPX_COMPUTE_DEVICE_CODE)
 #include <hpx/hpx.hpp>
 #include <hpx/hpx_init.hpp>
@@ -51,7 +52,8 @@ double benchmark_serialization(std::size_t data_size, std::size_t iterations,
 {
     hpx::id_type const here = hpx::find_here();
     hpx::naming::address addr(hpx::get_locality(),
-        hpx::components::component_invalid, (void*) &test_function);
+        to_int(hpx::components::component_enum_type::invalid),
+        (void*) &test_function);
 
     // compose archive flags
     std::string endian_out = hpx::get_config_entry("hpx.parcel.endian_out",
@@ -60,10 +62,10 @@ double benchmark_serialization(std::size_t data_size, std::size_t iterations,
     unsigned int out_archive_flags = 0U;
     if (endian_out == "little")
         out_archive_flags = out_archive_flags |
-            int(hpx::serialization::archive_flags::endian_little);
+            static_cast<int>(hpx::serialization::archive_flags::endian_little);
     else if (endian_out == "big")
         out_archive_flags = out_archive_flags |
-            int(hpx::serialization::archive_flags::endian_big);
+            static_cast<int>(hpx::serialization::archive_flags::endian_big);
     else
     {
         HPX_TEST(endian_out == "little" || endian_out == "big");
@@ -75,11 +77,13 @@ double benchmark_serialization(std::size_t data_size, std::size_t iterations,
     if (hpx::util::from_string<int>(array_optimization) == 0)
     {
         out_archive_flags = out_archive_flags |
-            int(hpx::serialization::archive_flags::disable_array_optimization);
+            static_cast<int>(
+                hpx::serialization::archive_flags::disable_array_optimization);
         out_archive_flags = out_archive_flags |
-            int(hpx::serialization::archive_flags::disable_data_chunking);
+            static_cast<int>(
+                hpx::serialization::archive_flags::disable_data_chunking);
         out_archive_flags = out_archive_flags |
-            int(hpx::serialization::archive_flags::
+            static_cast<int>(hpx::serialization::archive_flags::
                     disable_receive_data_chunking);
     }
     else
@@ -90,9 +94,10 @@ double benchmark_serialization(std::size_t data_size, std::size_t iterations,
             hpx::util::from_string<int>(zero_copy_optimization) == 0)
         {
             out_archive_flags = out_archive_flags |
-                int(hpx::serialization::archive_flags::disable_data_chunking);
+                static_cast<int>(
+                    hpx::serialization::archive_flags::disable_data_chunking);
             out_archive_flags = out_archive_flags |
-                int(hpx::serialization::archive_flags::
+                static_cast<int>(hpx::serialization::archive_flags::
                         disable_receive_data_chunking);
         }
         else
@@ -104,7 +109,7 @@ double benchmark_serialization(std::size_t data_size, std::size_t iterations,
                     0)
             {
                 out_archive_flags = out_archive_flags |
-                    int(hpx::serialization::archive_flags::
+                    static_cast<int>(hpx::serialization::archive_flags::
                             disable_receive_data_chunking);
             }
         }
@@ -125,14 +130,13 @@ double benchmark_serialization(std::size_t data_size, std::size_t iterations,
         outp = hpx::parcelset::parcel(
             hpx::parcelset::detail::create_parcel::call(std::move(dest),
                 std::move(addr), hpx::actions::typed_continuation<int>(here),
-                test_action(), hpx::threads::thread_priority::normal, buffer));
+                test_action(), hpx::launch::async, buffer));
     }
     else
     {
-        outp =
-            hpx::parcelset::parcel(hpx::parcelset::detail::create_parcel::call(
-                std::move(dest), std::move(addr), test_action(),
-                hpx::threads::thread_priority::normal, buffer));
+        outp = hpx::parcelset::parcel(
+            hpx::parcelset::detail::create_parcel::call(std::move(dest),
+                std::move(addr), test_action(), hpx::launch::async, buffer));
     }
 
     outp.set_source_id(here);
@@ -184,7 +188,7 @@ std::size_t concurrency = 1;
 
 int hpx_main(hpx::program_options::variables_map& vm)
 {
-    bool print_header = vm.count("no-header") == 0;
+    bool const print_header = vm.count("no-header") == 0;
     bool continuation = vm.count("continuation") != 0;
     bool zerocopy = vm.count("zerocopy") != 0;
 
@@ -244,4 +248,5 @@ int main(int argc, char* argv[])
 
     return hpx::init(argc, argv, init_args);
 }
+
 #endif

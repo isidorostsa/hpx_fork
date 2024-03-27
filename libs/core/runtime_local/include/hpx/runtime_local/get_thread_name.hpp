@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2014 Hartmut Kaiser
+//  Copyright (c) 2007-2024 Hartmut Kaiser
 //  Copyright (c) 2011      Bryce Lelbach
 //
 //  SPDX-License-Identifier: BSL-1.0
@@ -6,6 +6,8 @@
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 /// \file get_thread_name.hpp
+/// \page hpx::get_thread_name
+/// \headerfile hpx/runtime.hpp
 
 #pragma once
 
@@ -14,6 +16,7 @@
 #include <string>
 
 namespace hpx {
+
     ///////////////////////////////////////////////////////////////////////////
     /// \brief Return the name of the calling thread.
     ///

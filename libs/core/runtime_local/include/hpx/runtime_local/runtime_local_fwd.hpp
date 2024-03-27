@@ -6,6 +6,8 @@
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 /// \file runtime_local_fwd.hpp
+/// \page hpx::register_thread, hpx::unregister_thread, hpx::get_os_thread_data, hpx::enumerate_os_threads, hpx::get_runtime_instance_number, hpx::register_on_exit, hpx::is_starting, hpx::tolerate_node_faults, hpx::is_running, hpx::is_stopped, hpx::is_stopped_or_shutting_down, hpx::get_num_worker_threads, hpx::get_system_uptime
+/// \headerfile hpx/runtime.hpp
 
 #pragma once
 
@@ -35,6 +37,7 @@
 #include <string>
 
 namespace hpx {
+
     /// Register the current kernel thread with HPX, this should be done once
     /// for each external OS-thread intended to invoke HPX functionality.
     /// Calling this function more than once will return false.
@@ -64,6 +67,7 @@ namespace hpx {
 
     /// \cond NOINTERNAL
     namespace util {
+
         /// \brief Expand INI variables in a string
         HPX_CORE_EXPORT std::string expand(std::string const& expand);
 
@@ -80,7 +84,6 @@ namespace hpx {
     ///////////////////////////////////////////////////////////////////////////
     HPX_CORE_EXPORT hpx::util::io_service_pool* get_thread_pool(
         char const* name, char const* pool_name_suffix = "");
-
     /// \endcond
 
     ///////////////////////////////////////////////////////////////////////////
@@ -160,7 +163,7 @@ namespace hpx {
         /// \endcond
 
         /// \cond NOINTERNAL
-        /// Reset internal (round robin) thread distribution scheme
+        /// Reset internal (round-robin ) thread distribution scheme
         HPX_CORE_EXPORT void reset_thread_distribution();
 
         /// Set the new scheduler mode
@@ -186,8 +189,9 @@ namespace hpx {
     }    // namespace threads
 
     namespace detail {
+
         HPX_CORE_EXPORT void on_exit() noexcept;
-        HPX_CORE_EXPORT void on_abort(int signal) noexcept;
+        [[noreturn]] HPX_CORE_EXPORT void on_abort(int signal) noexcept;
         HPX_CORE_EXPORT void handle_print_bind(std::size_t num_threads);
     }    // namespace detail
 }    // namespace hpx

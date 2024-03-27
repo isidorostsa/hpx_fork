@@ -5,15 +5,16 @@
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 /// \file stop_token.hpp
+/// \page hpx::nostopstate, hpx::stop_callback, hpx::stop_source, hpx::stop_token, hpx::nostopstate_t
+/// \headerfile hpx/stop_token.hpp
 
 #pragma once
 
 #include <hpx/config.hpp>
 #include <hpx/assert.hpp>
-#include <hpx/modules/execution_base.hpp>
 #include <hpx/modules/memory.hpp>
 #include <hpx/modules/thread_support.hpp>
-#include <hpx/synchronization/mutex.hpp>
+#include <hpx/threading_base/threading_base_fwd.hpp>
 
 #include <atomic>
 #include <cstddef>

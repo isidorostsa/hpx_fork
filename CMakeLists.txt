@@ -1,5 +1,5 @@
 # Copyright (c)      2020 Mikael Simberg
-# Copyright (c) 2007-2023 Hartmut Kaiser
+# Copyright (c) 2007-2024 Hartmut Kaiser
 # Copyright (c) 2011-2014 Thomas Heller
 # Copyright (c) 2007-2008 Chirag Dekate
 # Copyright (c)      2011 Bryce Lelbach
@@ -89,7 +89,7 @@ hpx_set_cmake_policy(CMP0074 NEW)
 
 # We save the passed compiler flag to a special variable. This is needed for our
 # build system unit tests. Some flags might influence the created symbols
-# (_GLIBCXX_DEBUG i look at you)
+# (_GLIBCXX_DEBUG, I look at you)
 set(CMAKE_CXX_FLAGS_SAFE ${CMAKE_CXX_FLAGS})
 include(HPX_CheckCXXStandard)
 
@@ -953,7 +953,7 @@ if(HPX_WITH_APEX)
     "Do not update code from remote APEX repository." OFF CATEGORY "Profiling"
   )
   hpx_option(
-    HPX_WITH_APEX_TAG STRING "APEX repository tag or branch" "v2.6.3"
+    HPX_WITH_APEX_TAG STRING "APEX repository tag or branch" "v2.6.5"
     CATEGORY "Profiling"
   )
 endif()
@@ -976,6 +976,16 @@ endif()
 hpx_option(
   HPX_WITH_ASIO_TAG STRING "Asio repository tag or branch"
   ${HPX_WITH_ASIO_TAG_DEFAULT}
+  CATEGORY "Build Targets"
+  ADVANCED
+)
+
+# Option for automatically fetching Hwloc
+hpx_option(
+  HPX_WITH_FETCH_HWLOC
+  BOOL
+  "Use FetchContent to fetch Hwloc. By default an installed Hwloc will be used. (default: OFF)"
+  OFF
   CATEGORY "Build Targets"
   ADVANCED
 )
@@ -1644,6 +1654,16 @@ hpx_option(
 # ##############################################################################
 # C++ feature tests
 # ##############################################################################
+
+# Sometimes we need to be able to explicitly disable supporting the
+# [[no_unique_address]] attribute. This may be of use when mixing compilers, for
+# instance.
+hpx_option(
+  HPX_WITH_SUPPORT_NO_UNIQUE_ADDRESS_ATTRIBUTE BOOL
+  "Enable the use of the [[no_unique_address]] attribute (default: ON)" ON
+  ADVANCED
+)
+
 # Need to include the CUDA setup before the config test to enable the CUDA
 # language
 include(HPX_SetupCUDA)

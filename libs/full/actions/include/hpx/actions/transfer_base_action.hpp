@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2022 Hartmut Kaiser
+//  Copyright (c) 2007-2024 Hartmut Kaiser
 //  Copyright (c)      2011 Bryce Lelbach
 //  Copyright (c) 2011-2016 Thomas Heller
 //
@@ -28,12 +28,14 @@
 
 #if defined(HPX_HAVE_NETWORKING)
 #include <hpx/assert.hpp>
+#include <hpx/async_base/launch_policy.hpp>
 #include <hpx/datastructures/serialization/tuple.hpp>
 #include <hpx/modules/datastructures.hpp>
 #include <hpx/modules/runtime_local.hpp>
 #include <hpx/modules/serialization.hpp>
 #include <hpx/modules/util.hpp>
-#if HPX_HAVE_ITTNOTIFY != 0 && !defined(HPX_HAVE_APEX)
+#if defined(HPX_HAVE_ITTNOTIFY) && HPX_HAVE_ITTNOTIFY != 0 &&                  \
+    !defined(HPX_HAVE_APEX)
 #include <hpx/modules/itt_notify.hpp>
 #endif
 
@@ -48,7 +50,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace hpx { namespace actions {
+namespace hpx::actions {
 
     ///////////////////////////////////////////////////////////////////////////
     // If one or more arguments of the action are non-default-constructible,
@@ -67,7 +69,7 @@ namespace hpx { namespace actions {
             }
 
             template <typename... Ts>
-            argument_holder(Ts&&... ts)
+            explicit argument_holder(Ts&&... ts)
               : data_(new Args(HPX_FORWARD(Ts, ts)...))
             {
             }
@@ -96,66 +98,62 @@ namespace hpx { namespace actions {
             std::unique_ptr<Args> data_;
         };
     }    // namespace detail
-}}       // namespace hpx::actions
+}    // namespace hpx::actions
 
 namespace hpx {
 
     template <std::size_t I, typename Args>
-    constexpr HPX_HOST_DEVICE HPX_FORCEINLINE
-        typename hpx::tuple_element<I, Args>::type&
-        get(hpx::actions::detail::argument_holder<Args>& t)
+    constexpr HPX_HOST_DEVICE HPX_FORCEINLINE hpx::tuple_element_t<I, Args>&
+    get(hpx::actions::detail::argument_holder<Args>& t)
     {
         return hpx::tuple_element<I, Args>::get(t.data());
     }
 
     template <std::size_t I, typename Args>
     constexpr HPX_HOST_DEVICE HPX_FORCEINLINE
-        typename hpx::tuple_element<I, Args>::type const&
+        hpx::tuple_element_t<I, Args> const&
         get(hpx::actions::detail::argument_holder<Args> const& t)
     {
         return hpx::tuple_element<I, Args>::get(t.data());
     }
 
     template <std::size_t I, typename Args>
-    constexpr HPX_HOST_DEVICE HPX_FORCEINLINE
-        typename hpx::tuple_element<I, Args>::type&&
-        get(hpx::actions::detail::argument_holder<Args>&& t)
+    constexpr HPX_HOST_DEVICE HPX_FORCEINLINE hpx::tuple_element_t<I, Args>&&
+    get(hpx::actions::detail::argument_holder<Args>&& t)
     {
-        return std::forward<typename hpx::tuple_element<I, Args>::type>(
+        return std::forward<hpx::tuple_element_t<I, Args>>(
             hpx::get<I>(t.data()));
     }
 
     template <std::size_t I, typename Args>
     constexpr HPX_HOST_DEVICE HPX_FORCEINLINE
-        typename hpx::tuple_element<I, Args>::type const&&
+        hpx::tuple_element_t<I, Args> const&&
         get(hpx::actions::detail::argument_holder<Args> const&& t)
     {
-        return std::forward<typename hpx::tuple_element<I, Args>::type const>(
+        return std::forward<hpx::tuple_element_t<I, Args> const>(
             hpx::get<I>(t.data()));
     }
 }    // namespace hpx
 
-namespace hpx { namespace actions {
+namespace hpx::actions {
 
     ///////////////////////////////////////////////////////////////////////////
     template <typename Action>
     struct transfer_base_action : base_action_data
     {
-    public:
         transfer_base_action(transfer_base_action const&) = delete;
         transfer_base_action(transfer_base_action&&) = delete;
         transfer_base_action& operator=(transfer_base_action const&) = delete;
         transfer_base_action& operator=(transfer_base_action&&) = delete;
 
-    public:
         using component_type = typename Action::component_type;
         using derived_type = typename Action::derived_type;
         using result_type = typename Action::result_type;
         using arguments_base_type = typename Action::arguments_type;
-        using arguments_type = typename std::conditional<
-            std::is_constructible<arguments_base_type>::value,
-            arguments_base_type,
-            detail::argument_holder<arguments_base_type>>::type;
+        using arguments_type =
+            std::conditional_t<std::is_constructible_v<arguments_base_type>,
+                arguments_base_type,
+                detail::argument_holder<arguments_base_type>>;
 
         using continuation_type =
             typename traits::action_continuation<Action>::type;
@@ -164,13 +162,13 @@ namespace hpx { namespace actions {
         // (statically). This value might be different from the priority member
         // holding the runtime value an action has been created with
         static constexpr threads::thread_priority priority_value =
-            traits::action_priority<Action>::value;
+            traits::action_priority_v<Action>;
 
         // This is the stacksize value this action has been instantiated with
         // (statically). This value might be different from the stacksize member
         // holding the runtime value an action has been created with
         static constexpr threads::thread_stacksize stacksize_value =
-            traits::action_stacksize<Action>::value;
+            traits::action_stacksize_v<Action>;
 
         using direct_execution = typename Action::direct_execution;
 
@@ -178,17 +176,19 @@ namespace hpx { namespace actions {
         transfer_base_action() = default;
 
         // construct an action from its arguments
-        template <typename... Ts>
-        explicit transfer_base_action(Ts&&... vs)
+        template <typename T, typename... Ts,
+            typename = std::enable_if_t<
+                !std::is_convertible_v<std::decay_t<T>, hpx::launch>>>
+        explicit transfer_base_action(T&& t, Ts&&... vs)
           : base_action_data(threads::thread_priority::default_,
                 threads::thread_stacksize::default_)
-          , arguments_(HPX_FORWARD(Ts, vs)...)
+          , arguments_(HPX_FORWARD(T, t), HPX_FORWARD(Ts, vs)...)
         {
         }
 
         template <typename... Ts>
-        transfer_base_action(threads::thread_priority priority, Ts&&... vs)
-          : base_action_data(priority, threads::thread_stacksize::default_)
+        explicit transfer_base_action(hpx::launch policy, Ts&&... vs)
+          : base_action_data(policy.priority(), policy.stacksize())
           , arguments_(HPX_FORWARD(Ts, vs)...)
         {
         }
@@ -199,7 +199,6 @@ namespace hpx { namespace actions {
             detail::register_action<derived_type>::instance.instantiate();
         }
 
-    public:
         /// retrieve component type
         static int get_static_component_type()
         {
@@ -228,9 +227,10 @@ namespace hpx { namespace actions {
             return detail::get_action_id<derived_type>();
         }
 
-#if HPX_HAVE_ITTNOTIFY != 0 && !defined(HPX_HAVE_APEX)
+#if defined(HPX_HAVE_ITTNOTIFY) && HPX_HAVE_ITTNOTIFY != 0 &&                  \
+    !defined(HPX_HAVE_APEX)
         /// The function \a get_action_name_itt returns the name of this action
-        /// as a ITT string_handle
+        /// as an ITT string_handle
         util::itt::string_handle const& get_action_name_itt() const override
         {
             return detail::get_action_name_itt<derived_type>();
@@ -283,9 +283,8 @@ namespace hpx { namespace actions {
     public:
         /// retrieve the N's argument
         template <std::size_t N>
-        constexpr inline
-            typename hpx::tuple_element<N, arguments_type>::type const&
-            get() const
+        constexpr typename hpx::tuple_element<N, arguments_type>::type const&
+        get() const
         {
             return hpx::get<N>(arguments_);
         }
@@ -305,7 +304,7 @@ namespace hpx { namespace actions {
         }
 
         // saving ...
-        void save_base(hpx::serialization::output_archive& ar)
+        void save_base(hpx::serialization::output_archive& ar) const
         {
             ar << arguments_;
             this->base_action_data::save_base(ar);
@@ -329,6 +328,7 @@ namespace hpx { namespace actions {
         0);
 
     namespace detail {
+
         template <typename Action>
         void register_remote_action_invocation_count(
             invocation_count_registry& registry)
@@ -341,29 +341,27 @@ namespace hpx { namespace actions {
 
     ///////////////////////////////////////////////////////////////////////////
     template <std::size_t N, typename Action>
-    constexpr inline typename hpx::tuple_element<N,
-        typename transfer_action<Action>::arguments_type>::type const&
+    constexpr hpx::tuple_element_t<N,
+        typename transfer_action<Action>::arguments_type> const&
     get(transfer_base_action<Action> const& args)
     {
         return args.template get<N>();
     }
-}}    // namespace hpx::actions
+}    // namespace hpx::actions
 
 #if defined(HPX_HAVE_PARCELPORT_COUNTERS) &&                                   \
     defined(HPX_HAVE_PARCELPORT_ACTION_COUNTERS)
 #include <hpx/actions_base/detail/per_action_data_counter_registry.hpp>
 
-namespace hpx { namespace actions { namespace detail {
-    /// \cond NOINTERNAL
-    template <typename Action>
-    void register_per_action_data_counter_types(
-        per_action_data_counter_registry& registry)
-    {
-        registry.register_class(
-            hpx::actions::detail::get_action_name<Action>());
-    }
-    /// \endcond
-}}}       // namespace hpx::actions::detail
+/// \cond NOINTERNAL
+template <typename Action>
+void hpx::actions::detail::register_per_action_data_counter_types(
+    hpx::actions::detail::per_action_data_counter_registry& registry)
+{
+    registry.register_class(hpx::actions::detail::get_action_name<Action>());
+}
+/// \endcond
+
 #endif    // HPX_HAVE_PARCELPORT_ACTION_COUNTERS
 
 #endif    // HPX_HAVE_NETWORKING

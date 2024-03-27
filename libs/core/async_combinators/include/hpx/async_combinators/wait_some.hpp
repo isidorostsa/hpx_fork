@@ -6,6 +6,8 @@
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 /// \file wait_some.hpp
+/// \page hpx::wait_some
+/// \headerfile hpx/future.hpp
 
 #pragma once
 
@@ -301,7 +303,7 @@ namespace hpx {
                 // set callback functions to executed wait future is ready
                 set_on_completed_callback(*this);
 
-                // if all of the requested futures are already set, our callback
+                // if all the requested futures are already set, our callback
                 // above has already been called often enough, otherwise we
                 // suspend ourselves
                 {

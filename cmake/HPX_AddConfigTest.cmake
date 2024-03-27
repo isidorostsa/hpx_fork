@@ -330,7 +330,7 @@ function(hpx_check_for_cxx11_std_atomic_128bit)
     HPX_WITH_CXX11_ATOMIC_128BIT
     SOURCE cmake/tests/cxx11_std_atomic_128bit.cpp
     LIBRARIES ${HPX_CXX11_STD_ATOMIC_LIBRARIES}
-    FILE ${ARGN}
+    FILE EXECUTE
   )
   if(NOT MSVC)
     # Sometimes linking against libatomic is required, if the platform doesn't
@@ -345,7 +345,7 @@ function(hpx_check_for_cxx11_std_atomic_128bit)
         HPX_WITH_CXX11_ATOMIC_128BIT
         SOURCE cmake/tests/cxx11_std_atomic_128bit.cpp
         LIBRARIES ${HPX_CXX11_STD_ATOMIC_LIBRARIES}
-        FILE ${ARGN}
+        FILE EXECUTE
       )
       if(NOT HPX_WITH_CXX11_ATOMIC_128BIT)
         # Adding -latomic did not help, so we don't attempt to link to it later
@@ -634,10 +634,28 @@ function(hpx_check_for_cxx20_std_bit_cast)
 endfunction()
 
 # ##############################################################################
+function(hpx_check_for_cxx20_constexpr_destructor)
+  add_hpx_config_test(
+    HPX_WITH_CXX20_CONSTEXPR_DESTRUCTOR
+    SOURCE cmake/tests/cxx20_constexpr_destructor.cpp
+    FILE ${ARGN}
+  )
+endfunction()
+
+# ##############################################################################
 function(hpx_check_for_cxx23_std_generator)
   add_hpx_config_test(
     HPX_WITH_CXX23_STD_GENERATOR
     SOURCE cmake/tests/cxx23_std_generator.cpp
+    FILE ${ARGN}
+  )
+endfunction()
+
+# ##############################################################################
+function(hpx_check_for_cxx26_experimental_scope)
+  add_hpx_config_test(
+    HPX_WITH_CXX26_EXPERIMENTAL_SCOPE
+    SOURCE cmake/tests/cxx26_experimental_scope.cpp
     FILE ${ARGN}
   )
 endfunction()

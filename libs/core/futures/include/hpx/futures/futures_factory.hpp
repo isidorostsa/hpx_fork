@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2023 Hartmut Kaiser
+//  Copyright (c) 2007-2024 Hartmut Kaiser
 //
 //  SPDX-License-Identifier: BSL-1.0
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -22,6 +22,7 @@
 #include <hpx/modules/errors.hpp>
 #include <hpx/modules/memory.hpp>
 #include <hpx/threading_base/detail/get_default_pool.hpp>
+#include <hpx/threading_base/scheduler_base.hpp>
 #include <hpx/threading_base/thread_description.hpp>
 #include <hpx/threading_base/thread_helpers.hpp>
 #include <hpx/threading_base/thread_num_tss.hpp>
@@ -769,13 +770,17 @@ namespace hpx::lcos::local {
                 !std::is_same_v<std::decay_t<F>, futures_factory>>>
         explicit futures_factory(F&& f)
           : task_(detail::create_task_object<Result, Cancelable>::call(
-                hpx::util::internal_allocator<>{}, HPX_FORWARD(F, f)))
+                hpx::util::thread_local_caching_allocator<char,
+                    hpx::util::internal_allocator<>>{},
+                HPX_FORWARD(F, f)))
         {
         }
 
         explicit futures_factory(Result (*f)())
           : task_(detail::create_task_object<Result, Cancelable>::call(
-                hpx::util::internal_allocator<>{}, f))
+                hpx::util::thread_local_caching_allocator<char,
+                    hpx::util::internal_allocator<>>{},
+                f))
         {
         }
 

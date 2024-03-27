@@ -77,9 +77,9 @@ namespace hpx::agas {
 ///                  the underlying object. For all user-defined components,
 ///                  these bits contain a unique 88-bit number which is
 ///                  assigned sequentially for each locality. For
-///                  \a hpx#components#component_runtime_support the high 24
-///                  bits are zeroed and the low 64 bits hold the LVA of the
-///                  component.
+///                  \a hpx#components#component_enum_type#runtime_support
+///                  the high 24 bits are zeroed and the low 64 bits hold the
+///                  LVA of the component.
 ///
 /// The following address ranges are reserved. Some are either explicitly or
 /// implicitly protected by AGAS. The letter x represents a single-byte
@@ -147,8 +147,6 @@ namespace hpx::agas::server {
         naming::gid_type next_id_;     // next available gid
         naming::gid_type locality_;    // our locality id
         migration_table_type migrating_objects_;
-
-        struct update_time_on_exit;
 
     public:
         // data structure holding all counters for the component_namespace

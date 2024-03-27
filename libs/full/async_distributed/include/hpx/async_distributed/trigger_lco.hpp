@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2023 Hartmut Kaiser
+//  Copyright (c) 2007-2024 Hartmut Kaiser
 //
 //  SPDX-License-Identifier: BSL-1.0
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -11,6 +11,7 @@
 #include <hpx/config.hpp>
 #include <hpx/actions/actions_fwd.hpp>
 #include <hpx/actions_base/action_priority.hpp>
+#include <hpx/actions_base/action_stacksize.hpp>
 #include <hpx/assert.hpp>
 #include <hpx/async_distributed/continuation_fwd.hpp>
 #include <hpx/async_distributed/detail/post_continue_fwd.hpp>
@@ -102,6 +103,9 @@ namespace hpx {
         void set_lco_value(hpx::id_type const& id, naming::address&& addr,
             Result&& t, bool move_credits)
         {
+            constexpr launch::async_policy policy(
+                actions::action_priority<Action>(),
+                actions::action_stacksize<Action>());
             if (move_credits &&
                 id.get_management_type() !=
                     hpx::id_type::management_type::unmanaged)
@@ -110,15 +114,13 @@ namespace hpx {
                     hpx::id_type::management_type::managed_move_credit);
                 id.make_unmanaged();
 
-                detail::post_impl<Action>(target, HPX_MOVE(addr),
-                    actions::action_priority<Action>(),
+                detail::post_impl<Action>(target, HPX_MOVE(addr), policy,
                     detail::make_rvalue<Result>(t));
             }
             else
             {
-                detail::post_impl<Action>(id, HPX_MOVE(addr),
-                    actions::action_priority<Action>(),
-                    detail::make_rvalue<Result>(t));
+                detail::post_impl<Action>(
+                    id, HPX_MOVE(addr), policy, detail::make_rvalue<Result>(t));
             }
         }
 
@@ -164,7 +166,8 @@ namespace hpx {
             typename traits::promise_local_result<remote_result_type>::type;
 
         if (components::get_base_type(addr.type_) ==
-            components::component_base_lco_with_value_unmanaged)
+            to_int(
+                components::component_enum_type::base_lco_with_value_unmanaged))
         {
             using set_value_action =
                 typename lcos::base_lco_with_value<local_result_type,
@@ -179,7 +182,8 @@ namespace hpx {
             // NOLINTNEXTLINE(bugprone-use-after-move)
             HPX_ASSERT(!addr ||
                 components::get_base_type(addr.type_) ==
-                    components::component_base_lco_with_value);
+                    to_int(hpx::components::component_enum_type::
+                            base_lco_with_value));
 
             using set_value_action =
                 typename lcos::base_lco_with_value<local_result_type,
@@ -206,7 +210,8 @@ namespace hpx {
             typename traits::promise_local_result<remote_result_type>::type;
 
         if (components::get_base_type(addr.type_) ==
-            components::component_base_lco_with_value_unmanaged)
+            to_int(
+                components::component_enum_type::base_lco_with_value_unmanaged))
         {
             using set_value_action =
                 typename lcos::base_lco_with_value<local_result_type,
@@ -221,7 +226,8 @@ namespace hpx {
         {
             HPX_ASSERT(!addr ||
                 components::get_base_type(addr.type_) ==
-                    components::component_base_lco_with_value);
+                    to_int(
+                        components::component_enum_type::base_lco_with_value));
 
             using set_value_action =
                 typename lcos::base_lco_with_value<local_result_type,

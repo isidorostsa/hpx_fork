@@ -1,4 +1,4 @@
-//  Copyright (c) 2007-2020 Hartmut Kaiser
+//  Copyright (c) 2007-2024 Hartmut Kaiser
 //
 //  SPDX-License-Identifier: BSL-1.0
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <hpx/config.hpp>
 #include <hpx/coroutines/thread_enums.hpp>
 #include <hpx/naming_base/naming_base.hpp>
 #include <hpx/threading_base/register_thread.hpp>
@@ -14,7 +13,7 @@
 #include <hpx/threading_base/thread_init_data.hpp>
 #include <hpx/type_support/detail/wrap_int.hpp>
 
-namespace hpx { namespace traits {
+namespace hpx::traits {
 
     ///////////////////////////////////////////////////////////////////////////
     // Customization point for action capabilities
@@ -37,9 +36,9 @@ namespace hpx { namespace traits {
                 -> decltype(Action::component_type::schedule_thread(
                     lva, comptype, data))
             {
-                // by default we forward this to the component type
+                // by default, we forward this to the component type
                 using component_type = typename Action::component_type;
-                component_type::schedule_thread(lva, comptype, data);
+                return component_type::schedule_thread(lva, comptype, data);
             }
         };
     }    // namespace detail
@@ -54,4 +53,4 @@ namespace hpx { namespace traits {
                 0, lva, comptype, data);
         }
     };
-}}    // namespace hpx::traits
+}    // namespace hpx::traits

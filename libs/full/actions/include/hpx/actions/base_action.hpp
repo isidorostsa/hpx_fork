@@ -12,6 +12,14 @@
 
 #include <hpx/config.hpp>
 #include <hpx/modules/datastructures.hpp>
+#if defined(HPX_HAVE_NETWORKING)
+#include <hpx/modules/coroutines.hpp>
+#include <hpx/modules/preprocessor.hpp>
+#include <hpx/modules/serialization.hpp>
+#if defined(HPX_HAVE_ITTNOTIFY) && HPX_HAVE_ITTNOTIFY != 0 &&                  \
+    !defined(HPX_HAVE_APEX)
+#include <hpx/modules/itt_notify.hpp>
+#endif
 
 #include <hpx/actions/actions_fwd.hpp>
 #include <hpx/actions_base/actions_base_fwd.hpp>
@@ -19,28 +27,19 @@
 #include <hpx/actions_base/detail/action_factory.hpp>
 #include <hpx/actions_base/traits/action_continuation.hpp>
 #include <hpx/components_base/pinned_ptr.hpp>
-
-#if defined(HPX_HAVE_NETWORKING)
-#include <hpx/modules/coroutines.hpp>
-#include <hpx/modules/preprocessor.hpp>
-#include <hpx/modules/serialization.hpp>
-#if HPX_HAVE_ITTNOTIFY != 0 && !defined(HPX_HAVE_APEX)
-#include <hpx/modules/itt_notify.hpp>
-#endif
-
 #include <hpx/naming_base/id_type.hpp>
 #include <hpx/parcelset_base/parcel_interface.hpp>
 
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <type_traits>
 #include <utility>
 
 #include <hpx/config/warnings_prefix.hpp>
 
 ///////////////////////////////////////////////////////////////////////////////
-namespace hpx { namespace actions {
+namespace hpx::actions {
+
     ///////////////////////////////////////////////////////////////////////////
     // The \a base_action class is an abstract class used as the base class
     // for all action types. It's main purpose is to allow polymorphic
@@ -68,8 +67,10 @@ namespace hpx { namespace actions {
         /// a \a thread, encapsulating the functionality and the arguments
         /// of the action it is called for.
         ///
+        /// \param target
         /// \param lva    [in] This is the local virtual address of the
         ///               component the action has to be invoked on.
+        /// \param comptype
         ///
         /// \returns      This function returns a proper thread function usable
         ///               for a \a thread.
@@ -131,9 +132,10 @@ namespace hpx { namespace actions {
         /// associated with this action (mainly used for serialization purposes).
         virtual std::uint32_t get_action_id() const = 0;
 
-#if HPX_HAVE_ITTNOTIFY != 0 && !defined(HPX_HAVE_APEX)
+#if defined(HPX_HAVE_ITTNOTIFY) && HPX_HAVE_ITTNOTIFY != 0 &&                  \
+    !defined(HPX_HAVE_APEX)
         /// The function \a get_action_name_itt returns the name of this action
-        /// as a ITT string_handle
+        /// as an ITT string_handle
         virtual util::itt::string_handle const& get_action_name_itt() const = 0;
 #endif
     };
@@ -167,9 +169,8 @@ namespace hpx { namespace actions {
     protected:
         // serialization support
         void load_base(hpx::serialization::input_archive& ar);
-        void save_base(hpx::serialization::output_archive& ar);
+        void save_base(hpx::serialization::output_archive& ar) const;
 
-    protected:
         threads::thread_priority priority_ = threads::thread_priority::default_;
         threads::thread_stacksize stacksize_ =
             threads::thread_stacksize::default_;
@@ -180,11 +181,12 @@ namespace hpx { namespace actions {
         std::uint64_t parent_phase_ = 0;
 #endif
     };
-}}    // namespace hpx::actions
+}    // namespace hpx::actions
 
 ///////////////////////////////////////////////////////////////////////////////
 // serialization support for basic_action
-namespace hpx { namespace serialization {
+namespace hpx::serialization {
+
     template <typename Archive, typename Component, typename R,
         typename... Args, typename Derived>
     HPX_FORCEINLINE void serialize(Archive& /* ar */,
@@ -192,7 +194,7 @@ namespace hpx { namespace serialization {
         unsigned int const /* version */ = 0)
     {
     }
-}}    // namespace hpx::serialization
+}    // namespace hpx::serialization
 
 #include <hpx/config/warnings_suffix.hpp>
 
@@ -215,7 +217,8 @@ namespace hpx { namespace serialization {
 /**/
 
 ///////////////////////////////////////////////////////////////////////////////
-#if HPX_HAVE_ITTNOTIFY != 0 && !defined(HPX_HAVE_APEX)
+#if defined(HPX_HAVE_ITTNOTIFY) && HPX_HAVE_ITTNOTIFY != 0 &&                  \
+    !defined(HPX_HAVE_APEX)
 #define HPX_DEFINE_GET_ACTION_NAME_ITT(action, actionname)                     \
     namespace hpx::actions::detail {                                           \
         template <>                                                            \
