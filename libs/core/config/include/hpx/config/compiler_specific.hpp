@@ -97,8 +97,9 @@
 #endif
 
 // Detecting CUDA compilation mode
+// TODO: ensure __NVCC__ is enough to infer nvcc and review the macros.
 // Detecting NVCC
-#if defined(__NVCC__) || defined(__CUDACC__)
+#if defined(__NVCC__)
 // NVCC build version numbers can be high (without limit?) so we leave it out
 // from the version definition
 #  define HPX_CUDA_VERSION (__CUDACC_VER_MAJOR__*100 + __CUDACC_VER_MINOR__)
@@ -108,7 +109,7 @@
 #    define HPX_COMPUTE_DEVICE_CODE
 #  endif
 // Detecting Clang CUDA
-#elif defined(__clang__) && defined(__CUDA__)
+#elif defined(__clang__) && defined(__CUDACC__)
 #  define HPX_COMPUTE_CODE
 #  if defined(__CUDA_ARCH__)
      // clang compiling CUDA code, device mode.
